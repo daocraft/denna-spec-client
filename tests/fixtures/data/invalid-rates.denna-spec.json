@@ -1,0 +1,9 @@
+{
+  "$schema": "../schemas/rates.schema.json",
+  "metadata": {
+    "kind": "io.denna.defi.rates"
+  },
+  "rates": {
+    "badRate": { "value": "not-a-number", "unit": "bps" }
+  }
+}

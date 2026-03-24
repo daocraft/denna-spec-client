@@ -1,0 +1,11 @@
+{
+  "$schema": "../schemas/rates.schema.json",
+  "metadata": {
+    "id": "test-rates",
+    "kind": "io.denna.defi.rates",
+    "name": "Test Rates"
+  },
+  "rates": {
+    "ssrSpread": { "value": 30, "unit": "bps" }
+  }
+}
