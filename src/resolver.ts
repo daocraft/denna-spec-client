@@ -1,6 +1,7 @@
 import { join } from 'path';
 import { DennaLoadError } from './errors.js';
 import type { DennaConfig, DennaSource, GithubSource, FilesystemSource } from './config.js';
+import { getLockedRef, type DennaLockFile } from './lock.js';
 
 export type ResolvedSource =
   | { type: 'url'; url: string }
@@ -15,7 +16,7 @@ function isAlias(input: string): boolean {
   return /^[a-zA-Z][a-zA-Z0-9_-]*:/.test(input) && !input.startsWith('https:') && !input.startsWith('http:');
 }
 
-export function resolveSource(input: string, config: DennaConfig | null): ResolvedSource {
+export function resolveSource(input: string, config: DennaConfig | null, lock?: DennaLockFile | null): ResolvedSource {
   if (input.startsWith('https://') || input.startsWith('http://')) {
     return { type: 'url', url: input };
   }
@@ -37,8 +38,9 @@ export function resolveSource(input: string, config: DennaConfig | null): Resolv
     }
 
     if (source.type === 'github') {
+      const ref = getLockedRef(source, alias, lock ?? null);
       const fullPath = `${path}.denna-spec.json`;
-      const url = `https://raw.githubusercontent.com/${source.repo}/${source.ref}/${fullPath}`;
+      const url = `https://raw.githubusercontent.com/${source.repo}/${ref}/${fullPath}`;
       return { type: 'url', url };
     }
 

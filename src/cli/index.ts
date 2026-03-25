@@ -18,6 +18,8 @@ program
   .command('sync')
   .description('Regenerate TypeScript types from configured schemas')
   .option('--config <path>', 'Path to denna.config.json')
+  .option('--lock', 'Lock github sources to their current manifest version')
+  .option('--update-lock', 'Update locked versions to latest manifest versions')
   .option('--quiet', 'Suppress non-error output')
   .option('--verbose', 'Show detailed output')
   .action(syncCommand);

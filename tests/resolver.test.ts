@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { resolveSource } from '../src/resolver.js';
 import type { DennaConfig } from '../src/config.js';
+import type { DennaLockFile } from '../src/lock.js';
 
 const config: DennaConfig = {
   schemas: [],
@@ -91,5 +92,27 @@ describe('resolveSource', () => {
   it('throws for alias when no config', () => {
     expect(() => resolveSource('sky:path', null))
       .toThrow();
+  });
+
+  it('uses locked version tag for github source when lock exists', () => {
+    const lock: DennaLockFile = {
+      sources: {
+        sky: { version: '1.2.0', lockedAt: '2026-03-25T00:00:00Z' },
+      },
+    };
+    const result = resolveSource('sky:spark/protocol-config', config, lock);
+    expect(result).toEqual({
+      type: 'url',
+      url: 'https://raw.githubusercontent.com/amatsu/sky-parameters/v1.2.0/spark/protocol-config.denna-spec.json',
+    });
+  });
+
+  it('uses config ref when lock has no entry for alias', () => {
+    const lock: DennaLockFile = { sources: {} };
+    const result = resolveSource('sky:spark/protocol-config', config, lock);
+    expect(result).toEqual({
+      type: 'url',
+      url: 'https://raw.githubusercontent.com/amatsu/sky-parameters/main/spark/protocol-config.denna-spec.json',
+    });
   });
 });

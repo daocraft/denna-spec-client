@@ -7,13 +7,15 @@ import { resolveSource } from './resolver.js';
 import { fetchData } from './fetcher.js';
 import { createValidator } from './validator.js';
 import { hydrateDefaults } from './defaults.js';
+import { readLockFile, type DennaLockFile } from './lock.js';
 
 export interface DennaSpecOptions {
   config?: string | false;
 }
 
 export class DennaSpec {
-  private configPromise: Promise<DennaConfig | null> | null = null;
+  private configPromise: Promise<{ config: DennaConfig | null; configPath: string | null }> | null = null;
+  private lockPromise: Promise<DennaLockFile | null> | null = null;
   private validator = createValidator();
   private options: DennaSpecOptions;
 
@@ -21,18 +23,37 @@ export class DennaSpec {
     this.options = options;
   }
 
-  private async getConfig(): Promise<DennaConfig | null> {
-    if (this.options.config === false) return null;
+  private async getConfigWithPath(): Promise<{ config: DennaConfig | null; configPath: string | null }> {
+    if (this.options.config === false) return { config: null, configPath: null };
     if (!this.configPromise) {
       this.configPromise = (async () => {
         if (this.options.config) {
-          return loadConfig(this.options.config);
+          return { config: await loadConfig(this.options.config), configPath: this.options.config };
         }
         const discovered = await discoverConfig(process.cwd());
-        return discovered ? loadConfig(discovered) : null;
+        if (discovered) {
+          return { config: await loadConfig(discovered), configPath: discovered };
+        }
+        return { config: null, configPath: null };
       })();
     }
     return this.configPromise;
+  }
+
+  private async getConfig(): Promise<DennaConfig | null> {
+    const { config } = await this.getConfigWithPath();
+    return config;
+  }
+
+  private async getLock(): Promise<DennaLockFile | null> {
+    if (!this.lockPromise) {
+      this.lockPromise = (async () => {
+        const { configPath } = await this.getConfigWithPath();
+        if (!configPath) return null;
+        return readLockFile(configPath);
+      })();
+    }
+    return this.lockPromise;
   }
 
   /**
@@ -141,7 +162,8 @@ export class DennaSpec {
 
   async load<T = unknown>(source: string): Promise<T> {
     const config = await this.getConfig();
-    const resolved = resolveSource(source, config);
+    const lock = await this.getLock();
+    const resolved = resolveSource(source, config, lock);
 
     const raw = await fetchData(resolved);
 
