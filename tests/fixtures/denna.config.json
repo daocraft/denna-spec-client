@@ -2,7 +2,7 @@
   "schemas": [
     "./schemas/rates.schema.json"
   ],
-  "output": "./generated/denna-types.ts",
+  "output": "./generated",
   "sources": {
     "local": {
       "type": "filesystem",

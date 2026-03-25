@@ -1,11 +1,21 @@
 import { compile } from 'json-schema-to-typescript';
 import { readFile, writeFile, mkdir } from 'fs/promises';
-import { dirname } from 'path';
+import { dirname, join, relative, posix } from 'path';
 import { DennaLoadError, DennaSchemaError } from './errors.js';
 
 export interface CodegenOptions {
   schemas: string[];
   output?: string;
+}
+
+export interface CodegenTreeOptions {
+  schemas: string[];
+  outputDir: string;
+}
+
+export interface GeneratedFile {
+  relativePath: string;
+  content: string;
 }
 
 interface SchemaWithId {
@@ -47,6 +57,133 @@ function schemaToTypeName(schema: SchemaWithId): string {
 
 function isFilePath(schemaUrl: string): boolean {
   return !schemaUrl.startsWith('https://') && !schemaUrl.startsWith('http://');
+}
+
+/**
+ * Derives a relative file path from a schema's $id.
+ * Strips the protocol and hostname, keeping only the path.
+ * e.g. "https://spec.denna.io/v1/defi/protocol-config.schema.json" → "v1/defi/protocol-config.ts"
+ */
+function schemaIdToRelativePath(schema: SchemaWithId, schemaUrl: string): string {
+  const id = schema.$id ?? schemaUrl;
+  // Strip protocol and hostname for URLs
+  const withoutHost = id.replace(/^https?:\/\/[^/]+\//, '');
+  const withoutSchemaSuffix = withoutHost.replace(/\.schema\.json$/, '');
+  return withoutSchemaSuffix + '.ts';
+}
+
+/**
+ * Converts a kebab-case filename or directory name to PascalCase.
+ * e.g. "protocol-config" → "ProtocolConfig", "v1" → "V1"
+ */
+function toPascalCase(name: string): string {
+  return name
+    .split('-')
+    .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+    .join('');
+}
+
+/**
+ * Derives a short root type name from the file's basename.
+ * e.g. "spec.denna.io/v1/defi/protocol-config.ts" → "ProtocolConfig"
+ * The namespace tree provides uniqueness, so the type name stays short.
+ */
+function filePathToRootTypeName(relativePath: string): string {
+  const basename = posix.basename(relativePath, '.ts');
+  return toPascalCase(basename);
+}
+
+/**
+ * Builds index.ts files using `export * as <Name>` namespace re-exports.
+ * Each child (file or subdirectory) becomes a namespace, creating a tree like:
+ *   denna.V1.Defi.ProtocolConfig.ProtocolConfig (root interface)
+ *   denna.V1.Defi.ProtocolConfig.Metadata (schema-specific)
+ */
+function buildIndexFiles(filePaths: string[]): GeneratedFile[] {
+  // Group children by their parent directories at every level
+  const dirChildren = new Map<string, Set<string>>();
+
+  for (const filePath of filePaths) {
+    let current = filePath;
+    while (true) {
+      const parent = posix.dirname(current);
+      if (parent === current || parent === '.') {
+        if (!dirChildren.has('')) dirChildren.set('', new Set());
+        dirChildren.get('')!.add(current);
+        break;
+      }
+      if (!dirChildren.has(parent)) dirChildren.set(parent, new Set());
+      dirChildren.get(parent)!.add(current);
+      current = parent;
+    }
+  }
+
+  const indexFiles: GeneratedFile[] = [];
+
+  for (const [dir, children] of dirChildren) {
+    const exports: string[] = [];
+
+    for (const child of [...children].sort()) {
+      const childRelative = dir ? posix.relative(dir, child) : child;
+      const importPath = './' + childRelative.replace(/\.ts$/, '.js');
+
+      if (filePaths.includes(child)) {
+        // It's a type file — namespace re-export
+        const nsName = toPascalCase(posix.basename(child, '.ts'));
+        exports.push(`export * as ${nsName} from '${importPath}';`);
+      } else {
+        // It's a subdirectory — namespace re-export from its index
+        const nsName = toPascalCase(posix.basename(child));
+        exports.push(`export * as ${nsName} from '${importPath}/index.js';`);
+      }
+    }
+
+    indexFiles.push({
+      relativePath: dir ? `${dir}/index.ts` : 'index.ts',
+      content: HEADER + exports.join('\n') + '\n',
+    });
+  }
+
+  return indexFiles;
+}
+
+export async function generateTypesTree(options: CodegenTreeOptions): Promise<GeneratedFile[]> {
+  const schemas = await Promise.all(options.schemas.map(fetchSchema));
+  const files: GeneratedFile[] = [];
+  const typePaths: string[] = [];
+
+  for (let i = 0; i < schemas.length; i++) {
+    const schema = schemas[i];
+    const schemaUrl = options.schemas[i];
+    const relativePath = schemaIdToRelativePath(schema, schemaUrl);
+    const rootTypeName = filePathToRootTypeName(relativePath);
+
+    // Override title so json-schema-to-typescript uses our short name
+    const schemaForCompile = { ...schema, title: rootTypeName };
+    const generated = await compile(schemaForCompile as Record<string, unknown>, rootTypeName, {
+      bannerComment: '',
+      additionalProperties: false,
+      ...(isFilePath(schemaUrl) ? { cwd: dirname(schemaUrl) } : {}),
+    });
+
+    files.push({
+      relativePath,
+      content: HEADER + `/* From: ${schema.$id ?? schemaUrl} */\n${generated}`,
+    });
+    typePaths.push(relativePath);
+  }
+
+  // Build index.ts files at each directory level
+  files.push(...buildIndexFiles(typePaths));
+
+  // Write all files
+  for (const file of files) {
+    const fullPath = join(options.outputDir, file.relativePath);
+    await mkdir(dirname(fullPath), { recursive: true });
+    await writeFile(fullPath, file.content, 'utf-8');
+  }
+
+  return files;
 }
 
 export async function generateTypes(options: CodegenOptions): Promise<string> {

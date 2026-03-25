@@ -1,6 +1,6 @@
 import { resolve, dirname } from 'path';
 import { loadConfig, discoverConfig } from '../config.js';
-import { generateTypes } from '../codegen.js';
+import { generateTypesTree } from '../codegen.js';
 
 interface SyncOptions {
   config?: string;
@@ -25,15 +25,19 @@ export async function syncCommand(options: SyncOptions): Promise<void> {
     s.startsWith('https://') || s.startsWith('http://') ? s : resolve(configDir, s),
   );
 
-  const outputPath = resolve(configDir, config.output);
+  const outputDir = resolve(configDir, config.output);
 
   if (!options.quiet) {
     console.log(`Generating types from ${schemas.length} schema(s)...`);
   }
 
-  await generateTypes({ schemas, output: outputPath });
+  const files = await generateTypesTree({ schemas, outputDir });
 
   if (!options.quiet) {
-    console.log(`Types written to ${outputPath}`);
+    const typeFiles = files.filter((f) => !f.relativePath.endsWith('index.ts'));
+    for (const file of typeFiles) {
+      console.log(`  ${file.relativePath}`);
+    }
+    console.log(`\n${typeFiles.length} type file(s) written to ${outputDir}`);
   }
 }

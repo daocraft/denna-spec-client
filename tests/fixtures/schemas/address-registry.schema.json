@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spec.denna.io/v1/defi/address-registry.schema.json",
+  "title": "io.denna.defi.address-registry",
+  "description": "Minimal fixture for testing tree codegen.",
+  "type": "object",
+  "required": ["$schema", "metadata"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "metadata": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string" }
+      }
+    },
+    "addresses": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "address": { "type": "string" },
+          "chain": { "type": "string" }
+        }
+      }
+    }
+  }
+}
