@@ -78,7 +78,6 @@ export async function expandGlob(input: string, config: DennaConfig | null): Pro
       const regex = globToRegex(pattern);
       return entries.filter((f) => regex.test(f)).map((f) => resolve(dir, f));
     }
-    // Not a glob — pass through to resolver
     const resolved = resolveSource(input, config);
     if (resolved.type === 'file') return [resolved.path];
     if (resolved.type === 'url') return [resolved.url];

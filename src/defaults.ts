@@ -40,7 +40,6 @@ export function hydrateDefaults(data: Record<string, unknown>, schema: SchemaNod
 
   for (const [key, propSchema] of Object.entries(schema.properties)) {
     if (key in data) {
-      // Recurse into existing objects
       if (
         propSchema.type === 'object' &&
         propSchema.properties &&
@@ -53,7 +52,6 @@ export function hydrateDefaults(data: Record<string, unknown>, schema: SchemaNod
       continue;
     }
 
-    // Field missing — fill with default or zero value
     const value = propSchema.default ?? getZeroValue(propSchema);
     if (value !== undefined) {
       data[key] = value;

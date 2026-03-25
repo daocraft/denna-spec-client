@@ -84,7 +84,6 @@ export class DennaSpec {
     const schemaId = schema.$id as string | undefined;
 
     for (const ref of externalRefs) {
-      // Load the referenced schema from disk (resolve relative to schema file dir)
       const localPath = resolve(schemaDir, ref);
       let refSchema: Record<string, unknown>;
       try {
@@ -98,11 +97,9 @@ export class DennaSpec {
       // Determine the URI Ajv will look for when resolving this $ref
       let resolvedUri: string;
       if (schemaId && (schemaId.startsWith('https://') || schemaId.startsWith('http://'))) {
-        // Resolve the ref relative to the schema's $id
         const baseUrl = new URL(schemaId);
         resolvedUri = new URL(ref, baseUrl).href;
       } else {
-        // No $id or local $id — use the local file path
         resolvedUri = localPath;
       }
 
@@ -110,7 +107,6 @@ export class DennaSpec {
       try {
         this.validator.addSchema(refSchema, resolvedUri);
       } catch {
-        // Schema already registered — skip
       }
     }
   }
@@ -166,7 +162,6 @@ export class DennaSpec {
     const basePath = resolved.type === 'file' ? resolved.path : undefined;
     const { schema, schemaDir } = await this.fetchSchemaRaw(schemaRef, basePath);
 
-    // Pre-load referenced schemas so Ajv can resolve $ref without network access
     await this.preloadReferencedSchemas(schema, schemaDir);
 
     const result = await this.validator.validate(data, schema);
@@ -177,7 +172,6 @@ export class DennaSpec {
       );
     }
 
-    // Dereference schema for hydration (resolves all $ref chains)
     const resolvedSchemaPath = (!schemaRef.startsWith('https://') && !schemaRef.startsWith('http://'))
       ? (basePath ? resolve(dirname(basePath), schemaRef) : resolve(schemaRef))
       : schemaRef;

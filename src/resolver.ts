@@ -16,7 +16,6 @@ function isAlias(input: string): boolean {
 }
 
 export function resolveSource(input: string, config: DennaConfig | null): ResolvedSource {
-  // Direct URL
   if (input.startsWith('https://') || input.startsWith('http://')) {
     return { type: 'url', url: input };
   }
@@ -51,6 +50,5 @@ export function resolveSource(input: string, config: DennaConfig | null): Resolv
     throw new DennaLoadError(`Unknown source type: "${(source as DennaSource).type}"`, input);
   }
 
-  // File path (relative or absolute)
   return { type: 'file', path: input };
 }

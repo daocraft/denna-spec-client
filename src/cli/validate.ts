@@ -20,7 +20,6 @@ export async function validateCommand(sources: string[], options: ValidateOption
   // resolved paths so it doesn't need to load config again.
   const denna = new DennaSpec({ config: false });
 
-  // Expand globs into individual sources
   const expandedSources: string[] = [];
   for (const source of sources) {
     const expanded = await expandGlob(source, config);

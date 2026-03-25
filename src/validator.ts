@@ -9,7 +9,6 @@ export interface ValidationResult {
 }
 
 async function loadSchemaByUri(uri: string): Promise<object> {
-  // Handle URLs
   if (uri.startsWith('https://') || uri.startsWith('http://')) {
     const response = await fetch(uri);
     if (!response.ok) {
@@ -18,7 +17,6 @@ async function loadSchemaByUri(uri: string): Promise<object> {
     return response.json();
   }
 
-  // Handle file paths (relative or absolute)
   try {
     const raw = await readFile(uri, 'utf-8');
     return JSON.parse(raw);
