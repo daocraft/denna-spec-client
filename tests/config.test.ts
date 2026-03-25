@@ -9,7 +9,7 @@ describe('loadConfig', () => {
   it('loads and parses a valid config file', async () => {
     const config = await loadConfig(resolve(FIXTURES, 'denna.config.json'));
     expect(config.schemas).toContain('./schemas/rates.schema.json');
-    expect(config.output).toBe('./generated/denna-types.ts');
+    expect(config.output).toBe('./generated');
     expect(config.sources?.local).toEqual({
       type: 'filesystem',
       path: './data',
