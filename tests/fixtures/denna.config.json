@@ -1,0 +1,12 @@
+{
+  "schemas": [
+    "./schemas/rates.schema.json"
+  ],
+  "output": "./generated/denna-types.ts",
+  "sources": {
+    "local": {
+      "type": "filesystem",
+      "path": "./data"
+    }
+  }
+}

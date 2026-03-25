@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spec.denna.io/v1/defi/rates.schema.json",
+  "title": "io.denna.defi.rates",
+  "description": "Shared rate parameters, fallback values, and subsidy programs for a DeFi protocol. Suitable for cross-entity rate constants that multiple entities reference.",
+  "type": "object",
+  "required": ["$schema", "metadata"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "metadata": {
+      "$ref": "./denna-types.schema.json#/$defs/metadata"
+    },
+    "rates": {
+      "type": "object",
+      "description": "Named rate values. Each rate SHOULD use the Denna rate type.",
+      "additionalProperties": {
+        "$ref": "./denna-types.schema.json#/$defs/rate"
+      }
+    },
+    "fallbackRates": {
+      "type": "array",
+      "description": "Fallback rate values used when live data is unavailable.",
+      "items": {
+        "type": "object",
+        "required": ["name", "rate"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "description": "Identifier for this fallback rate." },
+          "rate": { "$ref": "./denna-types.schema.json#/$defs/rate" },
+          "description": { "type": "string" },
+          "source": { "type": "string" }
+        }
+      }
+    },
+    "rateHierarchy": {
+      "type": "array",
+      "description": "Documented relationships between rates (formulas, references).",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "description": "Rate name." },
+          "formula": { "type": "string", "description": "Mathematical formula expressing this rate." },
+          "value": { "$ref": "./denna-types.schema.json#/$defs/rate" },
+          "reference": { "type": "string", "description": "Governance or methodology reference." }
+        }
+      }
+    },
+    "subsidyPrograms": {
+      "type": "array",
+      "description": "Time-bounded subsidy programs that modify effective rates for eligible entities.",
+      "items": {
+        "type": "object",
+        "required": ["name", "start"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string" },
+          "start": { "$ref": "./denna-types.schema.json#/$defs/date" },
+          "duration": { "$ref": "./denna-types.schema.json#/$defs/duration" },
+          "cap": { "$ref": "./denna-types.schema.json#/$defs/amount" },
+          "capPeriod": { "type": "string", "description": "Period to which the cap applies (e.g., 'per entity per day')." },
+          "eligibleEntities": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Entity IDs eligible for this subsidy."
+          },
+          "formula": { "type": "string", "description": "Subsidy rate formula." },
+          "source": { "type": "string" }
+        }
+      }
+    },
+    "timeConstants": {
+      "type": "object",
+      "description": "Computational time constants used in rate calculations.",
+      "additionalProperties": false,
+      "properties": {
+        "secondsPerYear": { "type": "integer" },
+        "secondsPerDay": { "type": "integer" }
+      }
+    },
+    "externalDataSources": {
+      "type": "array",
+      "description": "External APIs or feeds used for rate data.",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string" },
+          "url": { "type": "string", "format": "uri" },
+          "field": { "type": "string", "description": "Specific field or key to extract from the response." },
+          "lookbackDays": { "type": "integer", "description": "Maximum days to look back when live data is unavailable." },
+          "description": { "type": "string" }
+        }
+      }
+    }
+  }
+}
