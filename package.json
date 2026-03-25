@@ -1,5 +1,5 @@
 {
-  "name": "@amatsu/denna-client",
+  "name": "@denna-spec/client",
   "version": "0.1.0",
   "description": "TypeScript library + CLI for loading and validating Denna Spec data files.",
   "type": "module",
@@ -30,6 +30,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "tsc --noEmit",
+    "prepare": "npm run build",
     "prepublishOnly": "npm run build"
   },
   "dependencies": {

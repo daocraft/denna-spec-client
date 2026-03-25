@@ -1,4 +1,4 @@
-# @amatsu/denna-client
+# @denna-spec/client
 
 TypeScript library + CLI for loading, validating, and generating types from [Denna Spec](https://spec.denna.io) data files.
 
@@ -7,7 +7,7 @@ Denna Spec is a convention for structuring protocol parameters as JSON files val
 ## Install
 
 ```bash
-npm install @amatsu/denna-client
+npm install @denna-spec/client
 ```
 
 ## Quick start
@@ -15,7 +15,7 @@ npm install @amatsu/denna-client
 ### Load a data file
 
 ```ts
-import { DennaSpec } from '@amatsu/denna-client';
+import { DennaSpec } from '@denna-spec/client';
 
 const denna = new DennaSpec();
 const data = await denna.load('shared/stablecoin-addresses.denna-spec.json');
@@ -37,7 +37,7 @@ console.log(data.addresses);
 ### Generate TypeScript types from schemas
 
 ```ts
-import { generateTypes } from '@amatsu/denna-client';
+import { generateTypes } from '@denna-spec/client';
 
 const output = await generateTypes({
   schemas: ['https://spec.denna.io/v1/defi/rates.schema.json'],
@@ -121,7 +121,7 @@ Aliases let you reference data files without full paths:
 ### `DennaSpec`
 
 ```ts
-import { DennaSpec } from '@amatsu/denna-client';
+import { DennaSpec } from '@denna-spec/client';
 
 // Auto-discover denna.config.json
 const denna = new DennaSpec();
@@ -138,7 +138,7 @@ const data = await denna.load<MyType>('source');
 ### `generateTypes(options)`
 
 ```ts
-import { generateTypes } from '@amatsu/denna-client';
+import { generateTypes } from '@denna-spec/client';
 
 const ts = await generateTypes({
   schemas: ['./schema.json'],
@@ -149,7 +149,7 @@ const ts = await generateTypes({
 ### `loadConfig(path)` / `discoverConfig(startDir)`
 
 ```ts
-import { loadConfig, discoverConfig } from '@amatsu/denna-client';
+import { loadConfig, discoverConfig } from '@denna-spec/client';
 
 const configPath = await discoverConfig(process.cwd());
 const config = configPath ? await loadConfig(configPath) : null;
