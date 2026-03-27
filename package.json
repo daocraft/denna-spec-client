@@ -1,6 +1,6 @@
 {
   "name": "@denna-labs/spec-client",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "TypeScript library + CLI for loading and validating Denna Spec data files.",
   "repository": {
     "type": "git",
