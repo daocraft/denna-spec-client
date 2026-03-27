@@ -1,6 +1,6 @@
 {
   "name": "@denna-labs/spec-client",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "TypeScript library + CLI for loading and validating Denna Spec data files.",
   "repository": {
     "type": "git",
@@ -13,7 +13,12 @@
   "bugs": {
     "url": "https://github.com/daocraft/denna-spec-client/issues"
   },
-  "keywords": ["denna-spec", "json-schema", "validation", "cli"],
+  "keywords": [
+    "denna-spec",
+    "json-schema",
+    "validation",
+    "cli"
+  ],
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",

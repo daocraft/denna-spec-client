@@ -1,3 +1,9 @@
+## [1.0.1](https://github.com/daocraft/denna-spec-client/compare/v1.0.0...v1.0.1) (2026-03-27)
+
+### Bug Fixes
+
+* add homepage, bugs url, and keywords to package.json ([3cd745b](https://github.com/daocraft/denna-spec-client/commit/3cd745b32c9251397b5ba0a47d369caadb4a0687))
+
 ## 1.0.0 (2026-03-27)
 
 ### Features
