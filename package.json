@@ -1,7 +1,14 @@
 {
-  "name": "@denna-spec/client",
-  "version": "0.1.0",
+  "name": "@denna-labs/spec-client",
+  "version": "0.0.0",
   "description": "TypeScript library + CLI for loading and validating Denna Spec data files.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/daocraft/denna-spec-client"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -31,7 +38,8 @@
     "test:watch": "vitest",
     "lint": "tsc --noEmit",
     "prepare": "npm run build",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "release": "semantic-release"
   },
   "dependencies": {
     "@apidevtools/json-schema-ref-parser": "^11.0.0",
@@ -43,7 +51,15 @@
     "typescript": "^5.7.0"
   },
   "devDependencies": {
+    "@semantic-release/changelog": "^6.0.0",
+    "@semantic-release/commit-analyzer": "^13.0.0",
+    "@semantic-release/git": "^10.0.0",
+    "@semantic-release/github": "^11.0.0",
+    "@semantic-release/npm": "^12.0.0",
+    "@semantic-release/release-notes-generator": "^14.0.0",
     "@types/node": "^25.5.0",
+    "conventional-changelog-conventionalcommits": "^8.0.0",
+    "semantic-release": "^24.0.0",
     "vitest": "^3.0.0"
   },
   "engines": {
