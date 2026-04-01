@@ -2,6 +2,7 @@ import { readFile, writeFile } from 'fs/promises';
 import { resolve, dirname, join } from 'path';
 import { DennaLoadError, DennaParseError } from './errors.js';
 import type { DennaConfig, GithubSource } from './config.js';
+import { githubFetchFile, resolveGithubToken } from './github.js';
 
 export interface LockedSource {
   version: string;
@@ -53,12 +54,10 @@ export async function writeLockFile(configPath: string, lock: DennaLockFile): Pr
 /**
  * Fetch the repository manifest from a github source to read its version.
  */
-async function fetchManifest(source: GithubSource): Promise<Manifest | null> {
-  const url = `https://raw.githubusercontent.com/${source.repo}/${source.ref}/${MANIFEST_FILENAME}`;
+async function fetchManifest(source: GithubSource, token?: string): Promise<Manifest | null> {
   try {
-    const response = await fetch(url);
-    if (!response.ok) return null;
-    return await response.json() as Manifest;
+    const raw = await githubFetchFile(source.repo, source.ref, MANIFEST_FILENAME, token);
+    return JSON.parse(raw) as Manifest;
   } catch {
     return null;
   }
@@ -68,8 +67,8 @@ async function fetchManifest(source: GithubSource): Promise<Manifest | null> {
  * Resolve the current version for a github source by reading its manifest.
  * Returns the manifest version string, or null if no manifest/version found.
  */
-export async function resolveSourceVersion(source: GithubSource): Promise<string | null> {
-  const manifest = await fetchManifest(source);
+export async function resolveSourceVersion(source: GithubSource, token?: string): Promise<string | null> {
+  const manifest = await fetchManifest(source, token);
   return manifest?.metadata?.version ?? null;
 }
 
@@ -85,7 +84,8 @@ export async function buildLockFile(config: DennaConfig): Promise<DennaLockFile>
   for (const [alias, source] of Object.entries(config.sources)) {
     if (source.type !== 'github') continue;
 
-    const version = await resolveSourceVersion(source);
+    const token = resolveGithubToken(source.tokenEnv);
+    const version = await resolveSourceVersion(source, token);
     if (version) {
       sources[alias] = { version, lockedAt: now };
     }
