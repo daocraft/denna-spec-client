@@ -11,3 +11,4 @@ export {
   DennaSchemaError,
   type ValidationErrorDetail,
 } from './errors.js';
+export { resolveGithubToken, githubFetchFile, githubListDir, type GithubDirEntry } from './github.js';
