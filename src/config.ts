@@ -6,6 +6,7 @@ export interface GithubSource {
   type: 'github';
   repo: string;
   ref: string;
+  tokenEnv?: string;
 }
 
 export interface FilesystemSource {
