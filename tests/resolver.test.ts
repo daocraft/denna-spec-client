@@ -1,7 +1,17 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { resolveSource } from '../src/resolver.js';
 import type { DennaConfig } from '../src/config.js';
 import type { DennaLockFile } from '../src/lock.js';
+
+const originalEnv = process.env;
+
+beforeEach(() => {
+  process.env = { ...originalEnv, SKY_TOKEN: 'ghp_test123' };
+});
+
+afterEach(() => {
+  process.env = originalEnv;
+});
 
 const config: DennaConfig = {
   schemas: [],
@@ -10,6 +20,12 @@ const config: DennaConfig = {
     sky: {
       type: 'github',
       repo: 'amatsu/sky-parameters',
+      ref: 'main',
+      tokenEnv: 'SKY_TOKEN',
+    },
+    pub: {
+      type: 'github',
+      repo: 'amatsu/public-params',
       ref: 'main',
     },
     local: {
@@ -20,11 +36,25 @@ const config: DennaConfig = {
 };
 
 describe('resolveSource', () => {
-  it('resolves github alias without glob', () => {
+  it('resolves github alias to github source type with token', () => {
     const result = resolveSource('sky:spark/protocol-config', config);
     expect(result).toEqual({
-      type: 'url',
-      url: 'https://raw.githubusercontent.com/amatsu/sky-parameters/main/spark/protocol-config.denna-spec.json',
+      type: 'github',
+      repo: 'amatsu/sky-parameters',
+      ref: 'main',
+      path: 'spark/protocol-config.denna-spec.json',
+      token: 'ghp_test123',
+    });
+  });
+
+  it('resolves github alias without tokenEnv to github source with no token', () => {
+    const result = resolveSource('pub:spark/protocol-config', config);
+    expect(result).toEqual({
+      type: 'github',
+      repo: 'amatsu/public-params',
+      ref: 'main',
+      path: 'spark/protocol-config.denna-spec.json',
+      token: undefined,
     });
   });
 
@@ -102,8 +132,11 @@ describe('resolveSource', () => {
     };
     const result = resolveSource('sky:spark/protocol-config', config, lock);
     expect(result).toEqual({
-      type: 'url',
-      url: 'https://raw.githubusercontent.com/amatsu/sky-parameters/v1.2.0/spark/protocol-config.denna-spec.json',
+      type: 'github',
+      repo: 'amatsu/sky-parameters',
+      ref: 'v1.2.0',
+      path: 'spark/protocol-config.denna-spec.json',
+      token: 'ghp_test123',
     });
   });
 
@@ -111,8 +144,17 @@ describe('resolveSource', () => {
     const lock: DennaLockFile = { sources: {} };
     const result = resolveSource('sky:spark/protocol-config', config, lock);
     expect(result).toEqual({
-      type: 'url',
-      url: 'https://raw.githubusercontent.com/amatsu/sky-parameters/main/spark/protocol-config.denna-spec.json',
+      type: 'github',
+      repo: 'amatsu/sky-parameters',
+      ref: 'main',
+      path: 'spark/protocol-config.denna-spec.json',
+      token: 'ghp_test123',
     });
+  });
+
+  it('throws when tokenEnv is set but env var is missing', () => {
+    delete process.env.SKY_TOKEN;
+    expect(() => resolveSource('sky:spark/protocol-config', config))
+      .toThrow('Environment variable "SKY_TOKEN" is not set');
   });
 });

@@ -7,6 +7,12 @@
     "local": {
       "type": "filesystem",
       "path": "./data"
+    },
+    "sky": {
+      "type": "github",
+      "repo": "daocraft/sky-parameters",
+      "ref": "main",
+      "tokenEnv": "SKY_GITHUB_TOKEN"
     }
   }
 }

@@ -16,6 +16,16 @@ describe('loadConfig', () => {
     });
   });
 
+  it('loads config with tokenEnv in github source', async () => {
+    const config = await loadConfig(resolve(FIXTURES, 'denna.config.json'));
+    expect(config.sources?.sky).toEqual({
+      type: 'github',
+      repo: 'daocraft/sky-parameters',
+      ref: 'main',
+      tokenEnv: 'SKY_GITHUB_TOKEN',
+    });
+  });
+
   it('throws DennaLoadError for missing file', async () => {
     await expect(loadConfig('/nonexistent/denna.config.json'))
       .rejects.toBeInstanceOf(DennaLoadError);

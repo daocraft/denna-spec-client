@@ -1,7 +1,7 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { resolve } from 'path';
 import { writeFile, rm, mkdir } from 'fs/promises';
-import { getLockedRef, readLockFile, writeLockFile, type DennaLockFile } from '../src/lock.js';
+import { getLockedRef, readLockFile, writeLockFile, resolveSourceVersion, type DennaLockFile } from '../src/lock.js';
 import type { GithubSource } from '../src/config.js';
 
 const TMP = resolve(import.meta.dirname, 'fixtures/tmp-lock');
@@ -57,5 +57,47 @@ describe('readLockFile / writeLockFile', () => {
     await writeLockFile(configPath, lock);
     const read = await readLockFile(configPath);
     expect(read).toEqual(lock);
+  });
+});
+
+describe('resolveSourceVersion', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('fetches manifest via github API with token', async () => {
+    const manifest = JSON.stringify({
+      metadata: { version: '2.5.0' },
+    });
+    const base64 = Buffer.from(manifest).toString('base64');
+
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+      new Response(JSON.stringify({ content: base64, encoding: 'base64' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+
+    const source: GithubSource = {
+      type: 'github',
+      repo: 'org/repo',
+      ref: 'main',
+      tokenEnv: 'TEST_TOKEN',
+    };
+    const version = await resolveSourceVersion(source, 'ghp_test');
+    expect(version).toBe('2.5.0');
+
+    const [, opts] = vi.mocked(fetch).mock.calls[0];
+    expect((opts?.headers as Record<string, string>).Authorization).toBe('Bearer ghp_test');
+  });
+
+  it('returns null when manifest not found', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+      new Response('Not Found', { status: 404 }),
+    );
+
+    const source: GithubSource = { type: 'github', repo: 'org/repo', ref: 'main' };
+    const version = await resolveSourceVersion(source);
+    expect(version).toBeNull();
   });
 });
