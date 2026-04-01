@@ -1,5 +1,6 @@
 import { readFile } from 'fs/promises';
 import { DennaLoadError } from './errors.js';
+import { githubFetchFile } from './github.js';
 import type { ResolvedSource } from './resolver.js';
 
 export async function fetchData(source: ResolvedSource): Promise<string> {
@@ -31,6 +32,10 @@ export async function fetchData(source: ResolvedSource): Promise<string> {
     }
 
     return response.text();
+  }
+
+  if (source.type === 'github') {
+    return githubFetchFile(source.repo, source.ref, source.path, source.token);
   }
 
   throw new DennaLoadError(`Cannot fetch glob source directly — resolve globs first`, 'glob');
