@@ -2,10 +2,12 @@ import { join } from 'path';
 import { DennaLoadError } from './errors.js';
 import type { DennaConfig, DennaSource, GithubSource, FilesystemSource } from './config.js';
 import { getLockedRef, type DennaLockFile } from './lock.js';
+import { resolveGithubToken } from './github.js';
 
 export type ResolvedSource =
   | { type: 'url'; url: string }
   | { type: 'file'; path: string }
+  | { type: 'github'; repo: string; ref: string; path: string; token?: string }
   | { type: 'glob'; source: DennaSource; pattern: string };
 
 export function hasGlob(input: string): boolean {
@@ -21,7 +23,6 @@ export function resolveSource(input: string, config: DennaConfig | null, lock?: 
     return { type: 'url', url: input };
   }
 
-  // Alias (e.g., sky:spark/protocol-config)
   if (isAlias(input)) {
     const colonIdx = input.indexOf(':');
     const alias = input.substring(0, colonIdx);
@@ -40,8 +41,8 @@ export function resolveSource(input: string, config: DennaConfig | null, lock?: 
     if (source.type === 'github') {
       const ref = getLockedRef(source, alias, lock ?? null);
       const fullPath = `${path}.denna-spec.json`;
-      const url = `https://raw.githubusercontent.com/${source.repo}/${ref}/${fullPath}`;
-      return { type: 'url', url };
+      const token = resolveGithubToken(source.tokenEnv);
+      return { type: 'github', repo: source.repo, ref, path: fullPath, token };
     }
 
     if (source.type === 'filesystem') {
